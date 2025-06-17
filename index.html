@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>🎨 カラフルさめがめ 🎨</title>
+    <title>🐠 カラフルさめがめゲーム 🐟</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+P+One&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -11,8 +11,10 @@
 <body>
     <div class="game-container">
         <div class="header">
-            <h1>🎨 カラフルさめがめ 🎨</h1>
-            <div class="game-info">
+        <h1>🐠 カラフルさめがめゲーム 🐟</h1>
+        <div class="subtitle">いっしょにたのしくあそぼう！</div>
+    </div>
+        <div class="game-info">
                 <div class="score-container">
                     <i class="fas fa-star"></i>
                     <span id="score">0</span> てん
@@ -24,9 +26,14 @@
         </div>
         <div id="board" class="board"></div>
         <div class="instructions">
-            <p>✨ おなじいろを さわって あつめよう！</p>
-            <p>🎯 2こいじょう つながっていると とけるよ！</p>
+        <p>✨ おなじいろのブロックを2つ以上つなげてタッチ！</p>
+        <p>🎯 たくさん消すと、もっとたくさんポイントがもらえるよ！</p>
+        <p>🏆 ぜんぶのブロックを消せたら、かんせい！</p>
+        <div class="emoji-hint">
+            <span>🎮 タップしてあそぶ</span>
+            <span>👇</span>
         </div>
+    </div>
     </div>
     <div class="celebration" id="celebration"></div>
     <script src="game.js"></script>

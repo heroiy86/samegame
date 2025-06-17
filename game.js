@@ -61,6 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         renderBoard();
+        addCellEventListeners();
         
         // ゲーム開始アニメーション
         const cells = document.querySelectorAll('.cell');
@@ -84,6 +85,28 @@ document.addEventListener('DOMContentLoaded', () => {
         document.head.appendChild(style);
     }
     
+    // セル要素にイベントリスナーを追加
+    function addCellEventListeners() {
+        const cells = document.querySelectorAll('.cell');
+        cells.forEach(cell => {
+            // 既存のイベントリスナーを削除
+            cell.removeEventListener('click', handleCellClick);
+            cell.removeEventListener('mouseenter', handleMouseEnter);
+            
+            // クリック/タップイベント
+            cell.addEventListener('click', handleCellClick);
+            
+            // マウスホバー時のハイライト
+            cell.addEventListener('mouseenter', handleMouseEnter);
+            cell.addEventListener('mouseleave', clearHighlights);
+            
+            // タッチイベント
+            cell.addEventListener('touchstart', handleTouchStart, { passive: true });
+            cell.addEventListener('touchend', handleTouchEnd, { passive: true });
+            cell.addEventListener('touchmove', handleTouchMove, { passive: true });
+        });
+    }
+    
     // ボードを描画
     function renderBoard() {
         boardElement.innerHTML = '';
@@ -99,8 +122,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 cellElement.style.backgroundColor = cell.color;
                 cellElement.dataset.x = x;
                 cellElement.dataset.y = y;
-                
-                cellElement.addEventListener('click', () => handleCellClick(x, y));
                 
                 boardElement.appendChild(cellElement);
                 cell.element = cellElement;
@@ -120,20 +141,28 @@ document.addEventListener('DOMContentLoaded', () => {
         // 2つ以上つながっている場合のみ削除
         if (connectedCells.length >= 2) {
             playSound('pop');
+            
+            // スコア計算: n*(n-1)点
+            const points = connectedCells.length * (connectedCells.length - 1);
+            updateScore(score + points);
+            
+            // ブロックを削除
             await animateCellRemoval(connectedCells);
             removeCells(connectedCells);
-            updateScore(score + Math.pow(connectedCells.length, 2));
             
-            // ブロックの再配置は行わない
+            // ブロックを下に落とす
+            await applyGravity();
+            
+            // 空の列を左に詰める
+            await shiftColumnsLeft();
+            
+            // ボードを再描画
             renderBoard();
+            addCellEventListeners();
             
-            // ゲームクリアチェック（全てのブロックが消えたか）
-            if (isBoardEmpty()) {
-                endGame(true);
-            }
-            // 有効な手が残っているかチェック
-            else if (isGameFinished()) {
-                endGame(false);
+            // ゲームオーバーチェック
+            if (isGameFinished()) {
+                endGame();
             }
         } else if (connectedCells.length === 1) {
             // 1つしかつながっていない場合は軽いフィードバック
@@ -146,6 +175,21 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }, 500);
             }
+        }
+    }
+    
+    // マウスがセルに乗ったときの処理
+    function handleMouseEnter(e) {
+        const cell = e.target.closest('.cell');
+        if (!cell) return;
+        
+        const x = parseInt(cell.dataset.x);
+        const y = parseInt(cell.dataset.y);
+        
+        // セルが有効な場合にハイライト
+        const clickedCell = board[y][x];
+        if (clickedCell) {
+            highlightConnectedCells(x, y);
         }
     }
     
@@ -184,13 +228,54 @@ document.addEventListener('DOMContentLoaded', () => {
         checked.add(key);
         let result = [board[y][x]];
         
-        // 4方向をチェック
-        result = result.concat(findConnectedCells(x + 1, y, color, checked));
-        result = result.concat(findConnectedCells(x - 1, y, color, checked));
-        result = result.concat(findConnectedCells(x, y + 1, color, checked));
-        result = result.concat(findConnectedCells(x, y - 1, color, checked));
+        // 4方向をチェック（上下左右のみ）
+        const directions = [
+            [0, 1],  // 下
+            [1, 0],  // 右
+            [0, -1], // 上
+            [-1, 0]  // 左
+        ];
+        
+        for (const [dx, dy] of directions) {
+            const newX = x + dx;
+            const newY = y + dy;
+            result = result.concat(findConnectedCells(newX, newY, color, checked));
+        }
         
         return result;
+    }
+    
+    // セルが選択可能かハイライト表示
+    function highlightConnectedCells(x, y) {
+        // 現在のハイライトをクリア
+        clearHighlights();
+        
+        const cell = board[y][x];
+        if (!cell) return;
+        
+        const connectedCells = findConnectedCells(x, y, cell.color);
+        
+        if (connectedCells.length >= 2) {
+            connectedCells.forEach(cell => {
+                if (cell && cell.element) {
+                    cell.element.style.filter = 'brightness(1.2)';
+                    cell.element.style.transform = 'scale(1.1)';
+                    cell.element.style.transition = 'all 0.2s';
+                }
+            });
+        }
+    }
+    
+    // ハイライトをクリア
+    function clearHighlights() {
+        for (let y = 0; y < BOARD_HEIGHT; y++) {
+            for (let x = 0; x < BOARD_WIDTH; x++) {
+                if (board[y][x] && board[y][x].element) {
+                    board[y][x].element.style.filter = '';
+                    board[y][x].element.style.transform = '';
+                }
+            }
+        }
     }
     
     // セルを削除
@@ -202,16 +287,66 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    // セルを下に詰める（使用しないが、念のため残しておく）
-    function shiftCellsDown() {
-        // この関数は使用しないが、他の場所で呼び出されている可能性があるので空の実装に
-        console.log('shiftCellsDown is disabled in this version');
+    // 重力を適用してブロックを下に落とす
+    async function applyGravity() {
+        let movement = false;
+        
+        // 下から上にスキャン
+        for (let x = 0; x < BOARD_WIDTH; x++) {
+            let emptyY = BOARD_HEIGHT - 1;
+            
+            for (let y = BOARD_HEIGHT - 1; y >= 0; y--) {
+                if (board[y][x]) {
+                    if (y !== emptyY) {
+                        // ブロックを下に移動
+                        board[emptyY][x] = board[y][x];
+                        board[y][x] = null;
+                        movement = true;
+                    }
+                    emptyY--;
+                }
+            }
+        }
+        
+        // アニメーション用に少し待機
+        if (movement) {
+            await new Promise(resolve => setTimeout(resolve, 200));
+        }
     }
     
-    // 空の列を削除（使用しないが、念のため残しておく）
-    function removeEmptyColumns() {
-        // この関数は使用しないが、他の場所で呼び出されている可能性があるので空の実装に
-        console.log('removeEmptyColumns is disabled in this version');
+    // 空の列を左に詰める
+    async function shiftColumnsLeft() {
+        let emptyCol = 0;
+        let movement = false;
+        
+        for (let x = 0; x < BOARD_WIDTH; x++) {
+            // 列が空かチェック
+            let isEmpty = true;
+            for (let y = 0; y < BOARD_HEIGHT; y++) {
+                if (board[y][x] !== null) {
+                    isEmpty = false;
+                    break;
+                }
+            }
+            
+            // 空でない列を左に詰める
+            if (!isEmpty) {
+                if (x !== emptyCol) {
+                    // 列を移動
+                    for (let y = 0; y < BOARD_HEIGHT; y++) {
+                        board[y][emptyCol] = board[y][x];
+                        board[y][x] = null;
+                    }
+                    movement = true;
+                }
+                emptyCol++;
+            }
+        }
+        
+        // アニメーション用に少し待機
+        if (movement) {
+            await new Promise(resolve => setTimeout(resolve, 200));
+        }
     }
     
     // 列が空かどうかをチェック
@@ -224,8 +359,26 @@ document.addEventListener('DOMContentLoaded', () => {
         return true;
     }
     
+    // ボードが空かどうかをチェック
+    function isBoardEmpty() {
+        for (let y = 0; y < BOARD_HEIGHT; y++) {
+            for (let x = 0; x < BOARD_WIDTH; x++) {
+                if (board[y][x]) {
+                    return false; // ブロックが残っている
+                }
+            }
+        }
+        return true; // ボードが空
+    }
+
     // ゲームが終了したかチェック
     function isGameFinished() {
+        // ボードが空ならクリア
+        if (isBoardEmpty()) {
+            console.log('クリア！おめでとうございます！🎉');
+            return true;
+        }
+        
         // 有効な手が残っているかチェック
         for (let y = 0; y < BOARD_HEIGHT; y++) {
             for (let x = 0; x < BOARD_WIDTH; x++) {
@@ -248,45 +401,75 @@ document.addEventListener('DOMContentLoaded', () => {
         scoreElement.textContent = score;
     }
     
-    // ボードが空かどうかをチェック
-    function isBoardEmpty() {
-        for (let y = 0; y < BOARD_HEIGHT; y++) {
-            for (let x = 0; x < BOARD_WIDTH; x++) {
-                if (board[y][x] !== null) {
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
-    
     // ゲーム終了処理
-    function endGame(isClear) {
+    function endGame() {
         isGameOver = true;
+        const isPerfectClear = isBoardEmpty();
         playSound('success');
         
         // お祝いアニメーション
         const celebration = document.getElementById('celebration');
         celebration.style.display = 'block';
         
-        // 花火エフェクト
-        for (let i = 0; i < 20; i++) {
-            setTimeout(() => {
-                createFirework();
-            }, i * 200);
+        // クリアメッセージを設定
+        const message = document.createElement('div');
+        message.className = 'celebration-message';
+        if (isPerfectClear) {
+            playSound('success');
+            message.innerHTML = `
+                <div class="celebration-content">
+                    <h2>🎉 パーフェクトクリア！ 🎉</h2>
+                    <p>すごい！全部のブロックを消しました！</p>
+                    <p>スコア: <span class="score-highlight">${score}</span> 点</p>
+                    <button id="play-again" class="rainbow-button">もう一度遊ぶ</button>
+                </div>
+            `;
+            // スペシャルエフェクト
+            for (let i = 0; i < 30; i++) {
+                setTimeout(() => {
+                    createFirework();
+                    createConfetti();
+                }, i * 150);
+            }
+        } else {
+            message.innerHTML = `
+                <div class="celebration-content">
+                    <h2>ゲームオーバー</h2>
+                    <p>スコア: <span class="score-highlight">${score}</span> 点</p>
+                    <button id="play-again" class="rainbow-button">もう一度遊ぶ</button>
+                </div>
+            `;
+            // 通常の花火エフェクト
+            for (let i = 0; i < 20; i++) {
+                setTimeout(() => {
+                    createFirework();
+                }, i * 200);
+            }
         }
         
-        // スコア表示
+        celebration.innerHTML = '';
+        celebration.appendChild(message);
+        
+        // もう一度遊ぶボタンのイベントリスナー
+        document.getElementById('play-again').addEventListener('click', () => {
+            celebration.style.display = 'none';
+            initGame();
+        });
+    }
+    
+    // 紙吹雪エフェクトを追加
+    function createConfetti() {
+        const confetti = document.createElement('div');
+        confetti.className = 'confetti';
+        confetti.style.left = Math.random() * 100 + 'vw';
+        confetti.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
+        confetti.style.animation = `confetti-fall ${2 + Math.random() * 3}s linear forwards`;
+        document.body.appendChild(confetti);
+        
+        // アニメーション終了後に要素を削除
         setTimeout(() => {
-            const message = isClear 
-                ? `🎉 おめでとう！全てのブロックを消しました！ 🎉\nスコア: ${score}`
-                : `ゲームオーバー！\nスコア: ${score}\n\nもっと消せるブロックがありません`;
-                
-            if (confirm(`${message}\n\nもう一度遊びますか？`)) {
-                celebration.style.display = 'none';
-                initGame();
-            }
-        }, 1500);
+            confetti.remove();
+        }, 5000);
     }
     
     // 花火エフェクトの作成
@@ -318,31 +501,51 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 1000);
     }
     
-    // 新しいゲームボタンのイベントリスナー
-    newGameButton.addEventListener('click', initGame);
+    // タッチ開始時の処理
+    function handleTouchStart(e) {
+        const cell = e.target.closest('.cell');
+        if (!cell) return;
+        
+        const touch = e.touches[0];
+        touchStartX = touch.clientX;
+        touchStartY = touch.clientY;
+        touchStartTime = Date.now();
+        touchTarget = cell;
+        
+        // タッチフィードバック
+        cell.style.transform = 'scale(0.95)';
+        
+        // ハイライト表示
+        const x = parseInt(cell.dataset.x);
+        const y = parseInt(cell.dataset.y);
+        highlightConnectedCells(x, y);
+        
+        // タッチムーブイベントを追加
+        document.addEventListener('touchmove', handleTouchMove, { passive: true });
+    }
     
-    // タッチイベントのサポート
-    document.addEventListener('touchstart', function(e) {
-        // タッチ時のハイライトを無効化
-        if (e.target.classList.contains('cell')) {
-            e.preventDefault();
-        }
-    }, { passive: false });
+    // タッチムーブイベントの処理
+    function handleTouchMove(e) {
+        const touch = e.touches[0];
+        const deltaX = touch.clientX - touchStartX;
+        const deltaY = touch.clientY - touchStartY;
+        
+        // タッチムーブイベントを削除
+        document.removeEventListener('touchmove', handleTouchMove, { passive: true });
+        
+        // タッチエンドイベントを追加
+        document.addEventListener('touchend', handleTouchEnd, { passive: true });
+    }
     
-    // スワイプ操作のサポート
-    let touchStartX = 0;
-    let touchStartY = 0;
-    
-    document.addEventListener('touchstart', function(e) {
-        touchStartX = e.touches[0].clientX;
-        touchStartY = e.touches[0].clientY;
-    });
-    
-    document.addEventListener('touchend', function(e) {
+    // タッチエンドイベントの処理
+    function handleTouchEnd(e) {
         const touchEndX = e.changedTouches[0].clientX;
         const touchEndY = e.changedTouches[0].clientY;
         const deltaX = touchEndX - touchStartX;
         const deltaY = touchEndY - touchStartY;
+        
+        // タッチエンドイベントを削除
+        document.removeEventListener('touchend', handleTouchEnd, { passive: true });
         
         // スワイプのしきい値
         if (Math.abs(deltaX) < 30 && Math.abs(deltaY) < 30) {
@@ -354,7 +557,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 handleCellClick(x, y);
             }
         }
-    });
+    }
+    
+    // 新しいゲームボタンのイベントリスナー
+    newGameButton.addEventListener('click', initGame);
     
     // ゲームを開始
     initGame();
