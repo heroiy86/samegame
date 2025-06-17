@@ -1,7 +1,19 @@
 document.addEventListener('DOMContentLoaded', () => {
     // ゲーム設定
-    const BOARD_WIDTH = 10;
-    const BOARD_HEIGHT = 15;
+    let isMobile = window.innerWidth <= 768;
+    let BOARD_WIDTH = isMobile ? 8 : 10;
+    let BOARD_HEIGHT = isMobile ? 12 : 15;
+    
+    // ウィンドウのリサイズを監視
+    window.addEventListener('resize', () => {
+        const wasMobile = isMobile;
+        isMobile = window.innerWidth <= 768;
+        
+        // モバイル/デスクトップの切り替わりでリロード
+        if ((wasMobile && !isMobile) || (!wasMobile && isMobile)) {
+            initGame();
+        }
+    });
     const COLORS = [
         '#FF6B9E', // ピンク
         '#FFD166', // イエロー
@@ -35,6 +47,10 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // ゲームの初期化
     function initGame() {
+        // ボードサイズを現在の画面サイズに合わせて更新
+        isMobile = window.innerWidth <= 768;
+        BOARD_WIDTH = isMobile ? 8 : 10;
+        BOARD_HEIGHT = isMobile ? 12 : 15;
         board = [];
         score = 0;
         isGameOver = false;
