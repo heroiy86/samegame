@@ -123,14 +123,17 @@ document.addEventListener('DOMContentLoaded', () => {
             await animateCellRemoval(connectedCells);
             removeCells(connectedCells);
             updateScore(score + Math.pow(connectedCells.length, 2));
-            await animateShiftDown();
-            shiftCellsDown();
-            removeEmptyColumns();
+            
+            // ブロックの再配置は行わない
             renderBoard();
             
-            // ゲームオーバーチェック
-            if (isGameFinished()) {
-                endGame();
+            // ゲームクリアチェック（全てのブロックが消えたか）
+            if (isBoardEmpty()) {
+                endGame(true);
+            }
+            // 有効な手が残っているかチェック
+            else if (isGameFinished()) {
+                endGame(false);
             }
         } else if (connectedCells.length === 1) {
             // 1つしかつながっていない場合は軽いフィードバック
@@ -199,43 +202,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    // セルを下に詰める
+    // セルを下に詰める（使用しないが、念のため残しておく）
     function shiftCellsDown() {
-        for (let x = 0; x < BOARD_WIDTH; x++) {
-            let writeIndex = BOARD_HEIGHT - 1;
-            
-            // 下から上にスキャンして、空でないセルを下に詰める
-            for (let y = BOARD_HEIGHT - 1; y >= 0; y--) {
-                if (board[y][x]) {
-                    if (y !== writeIndex) {
-                        board[writeIndex][x] = board[y][x];
-                        board[y][x] = null;
-                    }
-                    writeIndex--;
-                }
-            }
-        }
+        // この関数は使用しないが、他の場所で呼び出されている可能性があるので空の実装に
+        console.log('shiftCellsDown is disabled in this version');
     }
     
-    // 空の列を削除
+    // 空の列を削除（使用しないが、念のため残しておく）
     function removeEmptyColumns() {
-        for (let x = 0; x < BOARD_WIDTH; x++) {
-            if (isColumnEmpty(x)) {
-                // 空の列を削除して右から詰める
-                for (let x2 = x + 1; x2 < BOARD_WIDTH; x2++) {
-                    if (!isColumnEmpty(x2)) {
-                        // 列を入れ替え
-                        for (let y = 0; y < BOARD_HEIGHT; y++) {
-                            if (board[y][x2]) {
-                                board[y][x] = board[y][x2];
-                                board[y][x2] = null;
-                            }
-                        }
-                        break;
-                    }
-                }
-            }
-        }
+        // この関数は使用しないが、他の場所で呼び出されている可能性があるので空の実装に
+        console.log('removeEmptyColumns is disabled in this version');
     }
     
     // 列が空かどうかをチェック
@@ -272,8 +248,20 @@ document.addEventListener('DOMContentLoaded', () => {
         scoreElement.textContent = score;
     }
     
-    // ゲームオーバー
-    function endGame() {
+    // ボードが空かどうかをチェック
+    function isBoardEmpty() {
+        for (let y = 0; y < BOARD_HEIGHT; y++) {
+            for (let x = 0; x < BOARD_WIDTH; x++) {
+                if (board[y][x] !== null) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+    
+    // ゲーム終了処理
+    function endGame(isClear) {
         isGameOver = true;
         playSound('success');
         
@@ -290,7 +278,11 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // スコア表示
         setTimeout(() => {
-            if (confirm(`🎉 ゲームクリア！ 🎉\nスコア: ${score}\n\nもう一度遊びますか？`)) {
+            const message = isClear 
+                ? `🎉 おめでとう！全てのブロックを消しました！ 🎉\nスコア: ${score}`
+                : `ゲームオーバー！\nスコア: ${score}\n\nもっと消せるブロックがありません`;
+                
+            if (confirm(`${message}\n\nもう一度遊びますか？`)) {
                 celebration.style.display = 'none';
                 initGame();
             }
