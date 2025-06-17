@@ -1,32 +1,41 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // ゲーム設定
-    let isMobile = window.innerWidth <= 768;
-    let BOARD_WIDTH = isMobile ? 8 : 10;
-    let BOARD_HEIGHT = isMobile ? 12 : 15;
-    
-    // デバイスがモバイルかどうかを判定
-    function checkIfMobile() {
+    // ゲーム設定 - 初期化時に一度だけ設定
+    const isMobileDevice = () => {
         const userAgent = navigator.userAgent.toLowerCase();
         const isAndroid = userAgent.includes('android');
         const isIPhone = userAgent.includes('iphone');
         const isIPad = userAgent.includes('ipad');
         const isTablet = /(ipad|tablet|playbook|silk)|(android(?!.*mobile))/i.test(userAgent);
-        
-        // 画面サイズとユーザーエージェントの両方で判定
         const isSmallScreen = window.innerWidth <= 900;
         return (isAndroid || isIPhone || isIPad || isTablet) && isSmallScreen;
-    }
+    };
     
-    // ウィンドウのリサイズを監視
+    // 初期設定時に一度だけボードサイズを決定
+    const INITIAL_IS_MOBILE = isMobileDevice();
+    const BOARD_WIDTH = INITIAL_IS_MOBILE ? 8 : 10;
+    const BOARD_HEIGHT = INITIAL_IS_MOBILE ? 12 : 15;
+    
+    // リサイズ時はレイアウトのみ調整する
+    let resizeTimeout;
     window.addEventListener('resize', () => {
-        const wasMobile = isMobile;
-        isMobile = checkIfMobile();
-        
-        // モバイル/デスクトップの切り替わりでリロード
-        if ((wasMobile && !isMobile) || (!wasMobile && isMobile)) {
-            initGame();
-        }
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+            adjustLayout();
+        }, 200);
     });
+    
+    function adjustLayout() {
+        // レイアウト調整のみ行い、ゲームのリセットは行わない
+        const boardElement = document.getElementById('board');
+        if (!boardElement) return;
+        
+        // 必要に応じてレイアウトを調整
+        if (window.innerWidth < 600) {
+            boardElement.style.maxWidth = '100%';
+        } else {
+            boardElement.style.maxWidth = '450px';
+        }
+    }
     const COLORS = [
         '#FF6B9E', // ピンク
         '#FFD166', // イエロー
@@ -60,10 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // ゲームの初期化
     function initGame() {
-        // ボードサイズを現在の画面サイズに合わせて更新
-        isMobile = checkIfMobile();
-        BOARD_WIDTH = isMobile ? 8 : 10;
-        BOARD_HEIGHT = isMobile ? 12 : 15;
+        // ボードサイズは初期設定のまま変更しない
         board = [];
         score = 0;
         isGameOver = false;

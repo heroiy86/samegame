@@ -41,12 +41,14 @@ html, body {
 
 body {
     font-family: 'Mochiy Pop P One', 'Arial Rounded MT Bold', 'Arial', sans-serif;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
     margin: 0;
+    padding: 0;
+    min-height: 100vh;
     background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-x: hidden;
     padding: 20px;
     box-sizing: border-box;
     overflow-x: hidden;
@@ -72,69 +74,37 @@ body::before {
 }
 
 .game-container {
-    text-align: center;
-    background: rgba(255, 255, 255, 0.9);
-    border-radius: 30px;
-    padding: 25px;
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
-    text-align: center;
-    max-width: 100%;
     width: 100%;
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.2);
     box-sizing: border-box;
-    border: 5px solid #fff;
-    position: relative;
-    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
 }
 
-.game-container::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 15px;
-    background: linear-gradient(90deg, #ff9a9e, #fad0c4, #fad0c4, #a18cd1, #a18cd1, #fbc2eb);
-    background-size: 200% 100%;
-    animation: rainbow 10s linear infinite;
+.game-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
 }
 
-@keyframes rainbow {
-    0% { background-position: 0% 50%; }
-    100% { background-position: 200% 50%; }
+.board-wrapper {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin: 10px 0;
 }
 
-h1 {
-    color: #e91e63;
-    margin: 15px 0 10px 0;
-    font-size: 2.2em;
-    text-shadow: 3px 3px 0 #ffeb3b, -1px -1px 0 #ffeb3b, 1px -1px 0 #ffeb3b, -1px 1px 0 #ffeb3b, 1px 1px 0 #ffeb3b;
-    letter-spacing: 2px;
-    position: relative;
-    display: inline-block;
-    padding: 10px 25px;
-    background: white;
-    border-radius: 50px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-    transform: rotate(-2deg);
-    animation: bounce 2s infinite;
-}
-
-.subtitle {
-    color: #5d4037;
-    font-size: 1.2em;
-    margin-bottom: 15px;
-    text-shadow: 1px 1px 0 rgba(255,255,255,0.8);
-    animation: pulse 2s infinite;
-}
-
-h1::before, h1::after {
-    content: '🐠';
-    margin: 0 10px;
-    font-size: 1.2em;
-}
-
-.header {
-    margin-bottom: 15px;
+.instructions-container {
+    margin-top: auto;
+    padding-top: 20px;
 }
 
 .game-info {
@@ -231,7 +201,6 @@ button:hover {
     display: grid;
     grid-template-columns: repeat(8, 1fr);
     gap: 3px;
-    margin: 10px auto;
     width: 100%;
     max-width: 400px;
     aspect-ratio: 8/12;
@@ -240,42 +209,48 @@ button:hover {
     padding: 8px;
     box-sizing: border-box;
     box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.3);
-    position: relative;
 }
 
 /* タブレット以上のサイズ */
-@media (min-width: 900px) {
+@media (min-width: 768px) {
     .game-container {
         max-width: 500px;
-        padding: 25px;
-        border-radius: 20px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        min-height: auto;
+        height: auto;
+        padding: 20px;
     }
     
     .board {
         grid-template-columns: repeat(10, 1fr);
         max-width: 450px;
         aspect-ratio: 10/15;
-        padding: 10px;
-        gap: 4px;
     }
 }
 
-/* 中サイズのデバイス用 */
-@media (min-width: 600px) and (max-width: 899px) {
+/* スマホの横向き用 */
+@media (max-height: 600px) and (orientation: landscape) {
     .game-container {
-        max-width: 90%;
-        padding: 15px;
+        flex-direction: row;
+        max-width: 100%;
+        padding: 10px;
+        gap: 10px;
+    }
+    
+    .game-content {
+        flex: 2;
+    }
+    
+    .instructions-container {
+        flex: 1;
+        margin-top: 0;
+        padding-top: 0;
+        overflow-y: auto;
+        max-height: 90vh;
     }
     
     .board {
         max-width: 100%;
-        aspect-ratio: 10/15;
-        padding: 6px;
-    }
-    
-    .cell {
-        min-width: 25px;
+        aspect-ratio: 1/1.5;
     }
 }
 

@@ -17,24 +17,36 @@
         <h1>🐠 カラフルさめがめゲーム 🐟</h1>
         <div class="subtitle">いっしょにたのしくあそぼう！</div>
     </div>
-        <div class="game-info">
-                <div class="score-container">
-                    <i class="fas fa-star"></i>
-                    <span id="score">0</span> てん
+        <div class="game-container">
+        <div class="game-content">
+            <div class="header">
+                <h1>🐠 カラフルさめがめゲーム 🎮</h1>
+                <div class="game-info">
+                    <div>スコア: <span id="score">0</span></div>
+                    <button id="new-game">🔄 新しいゲーム</button>
                 </div>
-                <button id="new-game" class="rainbow-button">
-                    <i class="fas fa-redo"></i> あそぶ
-                </button>
+            </div>
+            
+            <div class="board-wrapper">
+                <div class="board" id="board">
+                    <!-- ゲームボードはJavaScriptで生成 -->
+                </div>
             </div>
         </div>
-        <div id="board" class="board"></div>
-        <div class="instructions">
-        <p>✨ おなじいろのブロックを2つ以上つなげてタッチ！</p>
-        <p>🎯 たくさん消すと、もっとたくさんポイントがもらえるよ！</p>
-        <p>🏆 ぜんぶのブロックを消せたら、かんせい！</p>
-        <div class="emoji-hint">
-            <span>🎮 タップしてあそぶ</span>
-            <span>👇</span>
+        
+        <div class="instructions-container">
+            <div class="instructions">
+                <h2>✨ 遊び方 ✨</h2>
+                <p>同じ色のブロックを2つ以上つなげてタップ！</p>
+                <p>たくさんつなげると高得点がもらえます</p>
+                <p>ブロックが消えると、上のブロックが下に落ちます</p>
+                <p>空の列は右側に自動で詰まります</p>
+                <p>これ以上消せるブロックがなくなるとゲーム終了</p>
+                
+                <div class="emoji-hint">
+                    <p>💡 ヒント: たくさんつなげるともっとポイントがもらえるよ！</p>
+                </div>
+            </div>
         </div>
     </div>
     </div>
