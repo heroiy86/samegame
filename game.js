@@ -40,25 +40,24 @@ document.addEventListener('DOMContentLoaded', () => {
         isGameOver = false;
         updateScore(0);
         
-        // ボードの初期化（同じ色が隣り合わないようにする）
+        // ボードの初期化（完全ランダム）
         for (let y = 0; y < BOARD_HEIGHT; y++) {
             board[y] = [];
             for (let x = 0; x < BOARD_WIDTH; x++) {
-                let color;
-                do {
-                    color = COLORS[Math.floor(Math.random() * COLORS.length)];
-                } while (
-                    (y > 0 && board[y-1][x] && board[y-1][x].color === color) ||
-                    (x > 0 && board[y][x-1] && board[y][x-1].color === color)
-                );
-                
                 board[y][x] = {
-                    color,
+                    color: COLORS[Math.floor(Math.random() * COLORS.length)],
                     x,
                     y,
                     element: null
                 };
             }
+        }
+        
+        // ゲームが遊べる状態かチェック（有効な手が全くない場合はやり直し）
+        if (isGameFinished()) {
+            console.log('ゲームが開始できません。再生成します。');
+            initGame();
+            return;
         }
         
         renderBoard();
@@ -257,11 +256,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (board[y][x]) {
                     const connectedCells = findConnectedCells(x, y, board[y][x].color);
                     if (connectedCells.length >= 2) {
+                        console.log(`有効な手があります: (${x},${y}) - ${connectedCells.length}個`);
                         return false; // 有効な手がある
                     }
                 }
             }
         }
+        console.log('ゲームオーバー：有効な手がありません');
         return true; // 有効な手がない
     }
     
