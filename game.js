@@ -4,10 +4,23 @@ document.addEventListener('DOMContentLoaded', () => {
     let BOARD_WIDTH = isMobile ? 8 : 10;
     let BOARD_HEIGHT = isMobile ? 12 : 15;
     
+    // デバイスがモバイルかどうかを判定
+    function checkIfMobile() {
+        const userAgent = navigator.userAgent.toLowerCase();
+        const isAndroid = userAgent.includes('android');
+        const isIPhone = userAgent.includes('iphone');
+        const isIPad = userAgent.includes('ipad');
+        const isTablet = /(ipad|tablet|playbook|silk)|(android(?!.*mobile))/i.test(userAgent);
+        
+        // 画面サイズとユーザーエージェントの両方で判定
+        const isSmallScreen = window.innerWidth <= 900;
+        return (isAndroid || isIPhone || isIPad || isTablet) && isSmallScreen;
+    }
+    
     // ウィンドウのリサイズを監視
     window.addEventListener('resize', () => {
         const wasMobile = isMobile;
-        isMobile = window.innerWidth <= 768;
+        isMobile = checkIfMobile();
         
         // モバイル/デスクトップの切り替わりでリロード
         if ((wasMobile && !isMobile) || (!wasMobile && isMobile)) {
@@ -48,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // ゲームの初期化
     function initGame() {
         // ボードサイズを現在の画面サイズに合わせて更新
-        isMobile = window.innerWidth <= 768;
+        isMobile = checkIfMobile();
         BOARD_WIDTH = isMobile ? 8 : 10;
         BOARD_HEIGHT = isMobile ? 12 : 15;
         board = [];

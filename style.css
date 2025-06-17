@@ -241,22 +241,57 @@ button:hover {
     box-sizing: border-box;
     box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.3);
     position: relative;
-    overflow: hidden;
 }
 
 /* タブレット以上のサイズ */
-@media (min-width: 600px) {
+@media (min-width: 900px) {
+    .game-container {
+        max-width: 500px;
+        padding: 25px;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+    
     .board {
         grid-template-columns: repeat(10, 1fr);
-        max-width: 500px;
+        max-width: 450px;
         aspect-ratio: 10/15;
         padding: 10px;
         gap: 4px;
     }
 }
 
+/* 中サイズのデバイス用 */
+@media (min-width: 600px) and (max-width: 899px) {
+    .game-container {
+        max-width: 90%;
+        padding: 15px;
+    }
+    
+    .board {
+        max-width: 100%;
+        aspect-ratio: 10/15;
+        padding: 6px;
+    }
+    
+    .cell {
+        min-width: 25px;
+    }
+}
+
 .cell {
-    aspect-ratio: 1;
+aspect-ratio: 1;
+border-radius: 6px;
+cursor: pointer;
+transition: all 0.2s ease;
+position: relative;
+overflow: hidden;
+box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+border: 2px solid rgba(255, 255, 255, 0.2);
+animation: popIn 0.3s ease-out;
+width: 100%;
+height: 0;
+padding-bottom: 100%; /* アスペクト比を維持 */
     border-radius: 6px;
     cursor: pointer;
     transition: all 0.2s ease;
