@@ -1,7 +1,29 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // ゲーム設定
     const BOARD_WIDTH = 10;
     const BOARD_HEIGHT = 15;
-    const COLORS = ['#FF5252', '#FFD740', '#69F0AE', '#40C4FF', '#E040FB', '#FF4081'];
+    const COLORS = [
+        '#FF6B9E', // ピンク
+        '#FFD166', // イエロー
+        '#06D6A0', // グリーン
+        '#118AB2', // ブルー
+        '#A05CDF', // パープル
+        '#FF9E7D'  // オレンジ
+    ];
+    
+    // 効果音
+    const sounds = {
+        pop: new Audio('data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU' + 'a'.repeat(1000)),
+        success: new Audio('data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU' + 'b'.repeat(1000))
+    };
+    
+    // 効果音を再生する関数
+    function playSound(sound) {
+        if (sounds[sound]) {
+            sounds[sound].currentTime = 0;
+            sounds[sound].play().catch(e => console.log('音声再生エラー:', e));
+        }
+    }
     
     let board = [];
     let score = 0;
@@ -18,12 +40,20 @@ document.addEventListener('DOMContentLoaded', () => {
         isGameOver = false;
         updateScore(0);
         
-        // ボードの初期化
+        // ボードの初期化（同じ色が隣り合わないようにする）
         for (let y = 0; y < BOARD_HEIGHT; y++) {
             board[y] = [];
             for (let x = 0; x < BOARD_WIDTH; x++) {
+                let color;
+                do {
+                    color = COLORS[Math.floor(Math.random() * COLORS.length)];
+                } while (
+                    (y > 0 && board[y-1][x] && board[y-1][x].color === color) ||
+                    (x > 0 && board[y][x-1] && board[y][x-1].color === color)
+                );
+                
                 board[y][x] = {
-                    color: COLORS[Math.floor(Math.random() * COLORS.length)],
+                    color,
                     x,
                     y,
                     element: null
@@ -32,6 +62,27 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         renderBoard();
+        
+        // ゲーム開始アニメーション
+        const cells = document.querySelectorAll('.cell');
+        cells.forEach((cell, index) => {
+            cell.style.animation = `popIn 0.3s ease-out ${index * 0.01}s backwards`;
+        });
+        
+        // アニメーション用のスタイルを追加
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes popIn {
+                0% { transform: scale(0); opacity: 0; }
+                80% { transform: scale(1.1); }
+                100% { transform: scale(1); opacity: 1; }
+            }
+            @keyframes popOut {
+                0% { transform: scale(1); opacity: 1; }
+                100% { transform: scale(0); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
     }
     
     // ボードを描画
@@ -59,18 +110,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // セルがクリックされたときの処理
-    function handleCellClick(x, y) {
+    async function handleCellClick(x, y) {
         if (isGameOver) return;
         
         const clickedCell = board[y][x];
-        if (!clickedCell) return;
+        if (!clickedCell || !clickedCell.element) return;
         
         const connectedCells = findConnectedCells(x, y, clickedCell.color);
         
         // 2つ以上つながっている場合のみ削除
         if (connectedCells.length >= 2) {
+            playSound('pop');
+            await animateCellRemoval(connectedCells);
             removeCells(connectedCells);
             updateScore(score + Math.pow(connectedCells.length, 2));
+            await animateShiftDown();
             shiftCellsDown();
             removeEmptyColumns();
             renderBoard();
@@ -79,7 +133,37 @@ document.addEventListener('DOMContentLoaded', () => {
             if (isGameFinished()) {
                 endGame();
             }
+        } else if (connectedCells.length === 1) {
+            // 1つしかつながっていない場合は軽いフィードバック
+            const cell = connectedCells[0];
+            if (cell && cell.element) {
+                cell.element.style.animation = 'shake 0.5s';
+                setTimeout(() => {
+                    if (cell.element) {
+                        cell.element.style.animation = '';
+                    }
+                }, 500);
+            }
         }
+    }
+    
+    // セル削除のアニメーション
+    function animateCellRemoval(cells) {
+        return new Promise(resolve => {
+            cells.forEach(cell => {
+                if (cell && cell.element) {
+                    cell.element.style.animation = 'popOut 0.3s forwards';
+                }
+            });
+            setTimeout(resolve, 300);
+        });
+    }
+    
+    // セルが下に落ちるアニメーション
+    function animateShiftDown() {
+        return new Promise(resolve => {
+            setTimeout(resolve, 200);
+        });
     }
     
     // つながっているセルを探す（フラッドフィルアルゴリズム）
@@ -190,11 +274,94 @@ document.addEventListener('DOMContentLoaded', () => {
     // ゲームオーバー
     function endGame() {
         isGameOver = true;
-        alert(`ゲームオーバー！ スコア: ${score}`);
+        playSound('success');
+        
+        // お祝いアニメーション
+        const celebration = document.getElementById('celebration');
+        celebration.style.display = 'block';
+        
+        // 花火エフェクト
+        for (let i = 0; i < 20; i++) {
+            setTimeout(() => {
+                createFirework();
+            }, i * 200);
+        }
+        
+        // スコア表示
+        setTimeout(() => {
+            if (confirm(`🎉 ゲームクリア！ 🎉\nスコア: ${score}\n\nもう一度遊びますか？`)) {
+                celebration.style.display = 'none';
+                initGame();
+            }
+        }, 1500);
+    }
+    
+    // 花火エフェクトの作成
+    function createFirework() {
+        const colors = ['#ff0000', '#ffff00', '#00ff00', '#00ffff', '#0000ff', '#ff00ff'];
+        const firework = document.createElement('div');
+        firework.style.position = 'fixed';
+        firework.style.width = '5px';
+        firework.style.height = '5px';
+        firework.style.borderRadius = '50%';
+        firework.style.background = colors[Math.floor(Math.random() * colors.length)];
+        firework.style.left = `${Math.random() * 100}%`;
+        firework.style.top = `${Math.random() * 100}%`;
+        firework.style.boxShadow = '0 0 10px 2px white';
+        firework.style.transform = 'scale(0)';
+        firework.style.transition = 'all 0.5s ease-out';
+        
+        document.body.appendChild(firework);
+        
+        // アニメーション開始
+        setTimeout(() => {
+            firework.style.transform = 'scale(15)';
+            firework.style.opacity = '0';
+        }, 10);
+        
+        // 要素を削除
+        setTimeout(() => {
+            firework.remove();
+        }, 1000);
     }
     
     // 新しいゲームボタンのイベントリスナー
     newGameButton.addEventListener('click', initGame);
+    
+    // タッチイベントのサポート
+    document.addEventListener('touchstart', function(e) {
+        // タッチ時のハイライトを無効化
+        if (e.target.classList.contains('cell')) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+    
+    // スワイプ操作のサポート
+    let touchStartX = 0;
+    let touchStartY = 0;
+    
+    document.addEventListener('touchstart', function(e) {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+    });
+    
+    document.addEventListener('touchend', function(e) {
+        const touchEndX = e.changedTouches[0].clientX;
+        const touchEndY = e.changedTouches[0].clientY;
+        const deltaX = touchEndX - touchStartX;
+        const deltaY = touchEndY - touchStartY;
+        
+        // スワイプのしきい値
+        if (Math.abs(deltaX) < 30 && Math.abs(deltaY) < 30) {
+            // タップとして処理
+            const target = document.elementFromPoint(touchEndX, touchEndY);
+            if (target && target.classList.contains('cell')) {
+                const x = parseInt(target.dataset.x);
+                const y = parseInt(target.dataset.y);
+                handleCellClick(x, y);
+            }
+        }
+    });
     
     // ゲームを開始
     initGame();

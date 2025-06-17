@@ -2,19 +2,33 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>さめがめゲーム</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🎨 カラフルさめがめ 🎨</title>
     <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+P+One&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
     <div class="game-container">
-        <h1>さめがめ</h1>
-        <div class="game-info">
-            <div>スコア: <span id="score">0</span></div>
-            <button id="new-game">新しいゲーム</button>
+        <div class="header">
+            <h1>🎨 カラフルさめがめ 🎨</h1>
+            <div class="game-info">
+                <div class="score-container">
+                    <i class="fas fa-star"></i>
+                    <span id="score">0</span> てん
+                </div>
+                <button id="new-game" class="rainbow-button">
+                    <i class="fas fa-redo"></i> あそぶ
+                </button>
+            </div>
         </div>
         <div id="board" class="board"></div>
+        <div class="instructions">
+            <p>✨ おなじいろを さわって あつめよう！</p>
+            <p>🎯 2こいじょう つながっていると とけるよ！</p>
+        </div>
     </div>
+    <div class="celebration" id="celebration"></div>
     <script src="game.js"></script>
 </body>
 </html>
