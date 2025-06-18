@@ -200,15 +200,16 @@ button:hover {
 .board {
     display: grid;
     grid-template-columns: repeat(8, 1fr);
-    gap: 3px;
+    gap: 2px;
     width: 100%;
     max-width: 400px;
     aspect-ratio: 8/12;
     background: rgba(0, 0, 0, 0.2);
     border-radius: 8px;
-    padding: 8px;
+    padding: 5px;
     box-sizing: border-box;
     box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.3);
+    margin: 0 auto;
 }
 
 /* タブレット以上のサイズ */
@@ -255,29 +256,20 @@ button:hover {
 }
 
 .cell {
-aspect-ratio: 1;
-border-radius: 6px;
-cursor: pointer;
-transition: all 0.2s ease;
-position: relative;
-overflow: hidden;
-box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-border: 2px solid rgba(255, 255, 255, 0.2);
-animation: popIn 0.3s ease-out;
-width: 100%;
-height: 0;
-padding-bottom: 100%; /* アスペクト比を維持 */
-    border-radius: 6px;
+    aspect-ratio: 1;
+    border-radius: 4px;
     cursor: pointer;
     transition: all 0.2s ease;
     position: relative;
     overflow: hidden;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    border: 2px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     animation: popIn 0.3s ease-out;
     width: 100%;
-    height: 0;
-    padding-bottom: 100%; /* アスペクト比を維持 */
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
 /* タッチターゲットを十分な大きさに */

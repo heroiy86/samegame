@@ -10,31 +10,31 @@ document.addEventListener('DOMContentLoaded', () => {
         return (isAndroid || isIPhone || isIPad || isTablet) && isSmallScreen;
     };
     
-    // 初期設定時に一度だけボードサイズを決定
-    const INITIAL_IS_MOBILE = isMobileDevice();
-    const BOARD_WIDTH = INITIAL_IS_MOBILE ? 8 : 10;
-    const BOARD_HEIGHT = INITIAL_IS_MOBILE ? 12 : 15;
+    // 初期設定時に一度だけボードサイズを決定（固定値を使用）
+    const BOARD_WIDTH = 8;  // 固定値に変更
+    const BOARD_HEIGHT = 12; // 固定値に変更
+    let isInitialized = false; // 初期化フラグを追加
     
-    // リサイズ時はレイアウトのみ調整する
-    let resizeTimeout;
+    // リサイズ時の処理を簡素化
     window.addEventListener('resize', () => {
-        clearTimeout(resizeTimeout);
-        resizeTimeout = setTimeout(() => {
-            adjustLayout();
-        }, 200);
+        if (!isInitialized) return;
+        adjustLayout();
     });
     
     function adjustLayout() {
-        // レイアウト調整のみ行い、ゲームのリセットは行わない
         const boardElement = document.getElementById('board');
         if (!boardElement) return;
         
-        // 必要に応じてレイアウトを調整
-        if (window.innerWidth < 600) {
-            boardElement.style.maxWidth = '100%';
-        } else {
-            boardElement.style.maxWidth = '450px';
-        }
+        // モバイル向けの最大幅を設定
+        const maxWidth = Math.min(window.innerWidth * 0.9, 450);
+        boardElement.style.maxWidth = `${maxWidth}px`;
+        
+        // セルのサイズを調整
+        const cells = document.querySelectorAll('.cell');
+        cells.forEach(cell => {
+            cell.style.width = '100%';
+            cell.style.height = '100%';
+        });
     }
     const COLORS = [
         '#FF6B9E', // ピンク
@@ -69,10 +69,26 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // ゲームの初期化
     function initGame() {
-        // ボードサイズは初期設定のまま変更しない
+        // 既存のボードをクリア
+        const boardElement = document.getElementById('board');
+        if (boardElement) {
+            boardElement.innerHTML = '';
+        }
+        
         board = [];
         score = 0;
         isGameOver = false;
+        isInitialized = true; // 初期化完了をマーク
+        
+        // スコア表示を更新
+        updateScore(0);
+        
+        // ボードを再描画
+        createBoard();
+        renderBoard();
+        
+        // レイアウトを調整
+        adjustLayout();
         updateScore(0);
         
         // ボードの初期化（完全ランダム）
